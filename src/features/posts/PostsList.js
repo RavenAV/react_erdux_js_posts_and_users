@@ -15,7 +15,7 @@ const PostsList = () => {
             <h2>Posts</h2>
             {renderedPosts}
         </section>
-    )
+    );
 }
 
 export default PostsList;
