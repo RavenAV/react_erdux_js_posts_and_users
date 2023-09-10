@@ -17,7 +17,7 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
     } catch (err) {
         return err.message;
     }
-})
+});
 
 export const addNewPost = createAsyncThunk('posts/addNewPost', async (initialPost) => {
     try {
@@ -26,7 +26,18 @@ export const addNewPost = createAsyncThunk('posts/addNewPost', async (initialPos
     } catch (err) {
         return err.message;
     }
-})
+});
+
+export const updatePost = createAsyncThunk('posts/updatePost', async (initialPost) => {
+    const { id } = initialPost;
+    try {
+        const response = await axios.put(`${POSTS_URL}/${id}`, initialPost);
+        return response.data;
+    } catch (err) {
+        return err.message;
+        //return initialPost; // only for testing Redux!
+    }
+});
 
 const postsSlice = createSlice({
     name: 'posts',
@@ -91,12 +102,12 @@ const postsSlice = createSlice({
                 state.error = action.error.message;
             })
             .addCase(addNewPost.fulfilled, (state, action) => {
-                const sortedPosts = state.posts.sort((a, b) => {
+                /*const sortedPosts = state.posts.sort((a, b) => {
                     if (a.id > b.id) return 1
                     if (a.id < b.id) return -1
                     return 0
                 })
-                action.payload.id = sortedPosts[sortedPosts.length - 1].id + 1;
+                action.payload.id = sortedPosts[sortedPosts.length - 1].id + 1;*/
 
                 action.payload.userId = Number(action.payload.userId)
                 action.payload.date = new Date().toISOString();
@@ -109,12 +120,27 @@ const postsSlice = createSlice({
                 }
                 state.posts.push(action.payload)
             })
+            .addCase(updatePost.fulfilled, (state, action) => {
+                if (!action.payload?.id) {
+                    console.log('Update could not complete');
+                    console.log(action.payload);
+                    return;
+                }
+                const { id } = action.payload;
+                action.payload.date = new Date().toISOString();
+                const posts = state.posts.filter(post => post.id !== id);
+                state.posts = [...posts, action.payload];
+            })
 }
 })
 
 export const selectAllPosts = (state) => state.posts.posts;
 export const getPostsStatus = (state) => state.posts.status;
 export const getPostsError = (state) => state.posts.error;
+
+export const selectPostById = (state, postId) => {
+    state.posts.posts.find(post => post.id === postId);
+}
 
 export const { postAdded, reactionAdded } = postsSlice.actions;
 
